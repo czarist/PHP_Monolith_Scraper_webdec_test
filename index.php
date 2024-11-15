@@ -7,7 +7,7 @@ define('PASSWORD', getenv('PASSWORD'));
 define('LOGIN_URL', getenv('LOGIN_URL'));
 define('TEST_PAGE_URL', getenv('TEST_PAGE_URL'));
 
-function loadEnv()
+function loadEnv(): void
 {
     if (!file_exists(__DIR__ . '/.env')) {
         throw new Exception('Arquivo .env não encontrado');
@@ -23,7 +23,7 @@ function loadEnv()
     }
 }
 
-function makeCurlRequest($url, $method = 'GET', $postFields = null, $cookies = null)
+function makeCurlRequest(string $url, string $method = 'GET', ?array $postFields = null, ?string $cookies = null): array
 {
     $ch = curl_init();
     curl_setopt_array($ch, [
@@ -46,7 +46,7 @@ function makeCurlRequest($url, $method = 'GET', $postFields = null, $cookies = n
     return [$body, $headers, $statusCode];
 }
 
-function buildHeaders($cookies)
+function buildHeaders(?string $cookies): array
 {
     $headers = [
         'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36',
@@ -59,23 +59,24 @@ function buildHeaders($cookies)
     return $headers;
 }
 
-function extractCsrfToken($html)
+function extractCsrfToken(string $html): ?string
 {
     $dom = new DOMDocument();
     libxml_use_internal_errors(true);
     $dom->loadHTML($html);
     libxml_clear_errors();
     $xpath = new DOMXPath($dom);
-    return $xpath->query('//meta[@name="csrf-token"]')->item(0)?->getAttribute('content');
+    $tokenNode = $xpath->query('//meta[@name="csrf-token"]')->item(0);
+    return $tokenNode ? $tokenNode->getAttribute('content') : null;
 }
 
-function extractCookies($headers)
+function extractCookies(string $headers): string
 {
     preg_match_all('/^Set-Cookie:\s*([^;]*)/mi', $headers, $cookieMatches);
     return implode('; ', $cookieMatches[1]);
 }
 
-function fetchTableDataAsJson($html)
+function fetchTableDataAsJson(string $html): string
 {
     $dom = new DOMDocument();
     libxml_use_internal_errors(true);
@@ -89,10 +90,10 @@ function fetchTableDataAsJson($html)
         if ($row instanceof DOMElement) {
             $cols = $row->getElementsByTagName('td');
             $data[] = [
-                'ID' => trim($cols->item(0)?->textContent ?? ''),
-                'Empresa' => trim($cols->item(1)?->textContent ?? ''),
-                'Endereço' => trim($cols->item(2)?->textContent ?? ''),
-                'Referência' => trim($cols->item(3)?->textContent ?? ''),
+                'ID' => trim($cols->item(0) ? $cols->item(0)->textContent : ''),
+                'Empresa' => trim($cols->item(1) ? $cols->item(1)->textContent : ''),
+                'Endereço' => trim($cols->item(2) ? $cols->item(2)->textContent : ''),
+                'Referência' => trim($cols->item(3) ? $cols->item(3)->textContent : ''),
             ];
         }
     }
